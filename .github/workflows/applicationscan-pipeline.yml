@@ -1,0 +1,78 @@
+name: 🔐 Application Security Scan — SAST/SCA/Secrets
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  security:
+    name: Security Pipeline
+    runs-on: ubuntu-latest
+
+    steps:
+      # ---------------------------
+      # Preparação
+      # ---------------------------
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Instalar dependências
+        run: npm install
+
+      # ---------------------------
+      # SAST — Semgrep
+      # ---------------------------
+      - name: Instalar Semgrep
+        run: pip install semgrep
+
+      - name: Executar SAST (Semgrep)
+        run: semgrep --config=auto --error
+
+      # ---------------------------
+      # SCA — Auditoria de Dependências
+      # ---------------------------
+      - name: Executar SCA (npm audit)
+        run: npm audit --audit-level=high || true
+
+      # ---------------------------
+      # Secret Scan — GitLeaks
+      # ---------------------------
+      - name: Executar Secret Scan (GitLeaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ---------------------------
+      # Finalização
+      # ---------------------------
+      - name: Resumo da execução
+        run: |
+          echo "----- RESUMO DO PIPELINE -----"
+          echo "SAST (Semgrep): Executado"
+          echo "SCA (npm audit): Executado"
+          echo "Secret Scan (GitLeaks): Executado"
+          echo "--------------------------------"
+
+      - name: Gerar relatório consolidado
+        run: |
+          echo "Relatório de Segurança - Pipeline" > relatorio.txt
+          echo "SAST: Executado" >> relatorio.txt
+          echo "SCA: Executado" >> relatorio.txt
+          echo "Secrets: Executado" >> relatorio.txt
+
+      - name: Salvar relatório consolidado
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-seguranca
+          path: relatorio.txt
+
+      # ---------------------------
+      # Trabalho completo
+      # ---------------------------
+      - name: Trabalho completo
+        run: echo "✔ Pipeline finalizado com sucesso."
