@@ -37,12 +37,14 @@ jobs:
       - name: Executar Secret Scan (GitLeaks)
         uses: gitleaks/gitleaks-action@v2
         with:
-          args: detect --report-path=gitleaks-report.txt
+          args: detect --report-format=json --report-path=gitleaks-report.json
 
-      - name: Converter relatório GitLeaks para HTML
+      - name: Converter relatório GitLeaks para TXT e HTML
         run: |
+          cat gitleaks-report.json > gitleaks-report.txt
+
           echo "<html><body><h2>Relatório GitLeaks</h2><pre>" > gitleaks-report.html
-          cat gitleaks-report.txt >> gitleaks-report.html
+          cat gitleaks-report.json >> gitleaks-report.html
           echo "</pre></body></html>" >> gitleaks-report.html
 
       # Relatório consolidado
