@@ -1,4 +1,5 @@
 name: 🔐 Application Security Scan — SAST/SCA/Secrets
+
 on:
   push:
   pull_request:
@@ -11,7 +12,7 @@ jobs:
       contents: read
 
     steps:
-
+      
       # Preparação
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -35,11 +36,8 @@ jobs:
       # Secret Scan — GitLeaks
       - name: Executar Secret Scan (GitLeaks)
         uses: gitleaks/gitleaks-action@v2
-        with:
-          args: detect --source=. --report-format=json --report-path=gitleaks-report.json
-      - name: Converter relatório GitLeaks para TXT
-        run: |
-          cat gitleaks-report.json > gitleaks-report.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Relatório consolidado
       - name: Gerar relatório consolidado
@@ -56,8 +54,10 @@ jobs:
 
           mv semgrep-report.txt "Relatórios de execução/txt/"
           mv audit-report.txt "Relatórios de execução/txt/"
-          mv gitleaks-report.txt "Relatórios de execução/txt/"
           mv relatorio.txt "Relatórios de execução/txt/"
+
+          # GitLeaks gera automaticamente gitleaks.sarif
+          cp gitleaks.sarif "Relatórios de execução/txt/"
 
       # Upload final
       - name: Upload dos relatórios
