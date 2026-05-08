@@ -56,6 +56,106 @@ jobs:
             relatorios.txt
             gitleaks.sarif
 
+      - name: Gerar zap-security-report.html
+        run: |
+          cat > zap-security-report.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="pt-BR">
+          <head>
+            <meta charset="UTF-8" />
+            <title>ZAP Security Report</title>
+            <style>
+              body { font-family: Arial, sans-serif; background: #0b1020; color: #fff; padding: 20px; }
+              h1, h2 { color: #ffcc00; }
+              .section { margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #333; }
+              .badge { padding: 4px 10px; border-radius: 6px; font-weight: bold; }
+              .critico { background: #ff1744; }
+              .alto { background: #ff9100; }
+              .moderado { background: #ffea00; color: #000; }
+              .baixo { background: #00e676; color: #000; }
+              .informativo { background: #29b6f6; color: #000; }
+              table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+              th, td { border: 1px solid #444; padding: 8px; }
+              th { background: #11162a; }
+            </style>
+          </head>
+          <body>
+
+            <h1>ZAP Security Report</h1>
+            <p>Pipeline de Segurança — SAST · SCA · Secrets · NICE Framework</p>
+
+            <div class="section">
+              <h2>1. Classificação dos Riscos (NICE + OWASP)</h2>
+              <table>
+                <tr>
+                  <th>Nível</th><th>Descrição</th><th>Responsáveis NICE</th><th>Ação</th>
+                </tr>
+                <tr>
+                  <td><span class="badge critico">CRÍTICO</span></td>
+                  <td>Ameaça ativa, impacto severo.</td>
+                  <td>PR-CIR, IN-FOR, OV-MGT</td>
+                  <td>Resposta imediata.</td>
+                </tr>
+                <tr>
+                  <td><span class="badge alto">ALTO</span></td>
+                  <td>Alta probabilidade ou impacto relevante.</td>
+                  <td>AN-ASA, PR-CDA</td>
+                  <td>Correção prioritária.</td>
+                </tr>
+                <tr>
+                  <td><span class="badge moderado">MODERADO</span></td>
+                  <td>Exploração possível.</td>
+                  <td>SP-DEV, SP-ARC</td>
+                  <td>Correção planejada.</td>
+                </tr>
+                <tr>
+                  <td><span class="badge baixo">BAIXO</span></td>
+                  <td>Baixo impacto.</td>
+                  <td>CO-OPS</td>
+                  <td>Monitoramento.</td>
+                </tr>
+                <tr>
+                  <td><span class="badge informativo">INFORMATIVO</span></td>
+                  <td>Achado sem impacto direto.</td>
+                  <td>OV-PMA</td>
+                  <td>Documentação.</td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="section">
+              <h2>2. Resultados do Pipeline</h2>
+              <p><strong>SAST:</strong> semgrep-report.txt</p>
+              <p><strong>SCA:</strong> audit-report.txt</p>
+              <p><strong>Secrets:</strong> gitleaks-results.sarif</p>
+              <p><strong>Consolidado:</strong> relatorio.txt</p>
+            </div>
+
+            <div class="section">
+              <h2>3. Resumo Executivo</h2>
+              <p>Este relatório consolida os resultados de SAST, SCA e Secret Scan alinhados ao NICE Framework.</p>
+            </div>
+
+            <div class="section">
+              <h2>4. Recomendações</h2>
+              <ul>
+                <li>Corrigir achados críticos imediatamente.</li>
+                <li>Priorizar vulnerabilidades altas.</li>
+                <li>Planejar correções moderadas.</li>
+                <li>Monitorar achados baixos.</li>
+              </ul>
+            </div>
+
+          </body>
+          </html>
+          EOF
+
+      - name: Upload zap-security-report.html
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-security-report-html
+          path: zap-security-report.html
+
       # Trabalho completo
       - name: Trabalho completo
         run: echo "✔ Pipeline finalizado com sucesso."
