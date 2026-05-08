@@ -1,5 +1,4 @@
 name: 🔐 Application Security Scan — SAST/SCA/Secrets
-
 on:
   push:
   pull_request:
@@ -10,9 +9,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ---------------------------
+      
       # Preparação
-      # ---------------------------
       - name: Checkout do código
         uses: actions/checkout@v4
 
@@ -21,43 +19,33 @@ jobs:
         with:
           node-version: 18
 
-      - name: Instalar dependências
-        run: npm install
+      - name: Instalar dependências e Semgrep
+        run: |
+          npm install
+          pip install semgrep
 
-      # ---------------------------
-      # SAST — Semgrep
-      # ---------------------------
-      - name: Instalar Semgrep
-        run: pip install semgrep
+      # SAST / SCA
+      - name: Executar SAST e SCA
+        run: |
+          semgrep --config=auto --error > semgrep-report.txt
+          semgrep --config=auto --error --json > semgrep-report.html
 
-      - name: Executar SAST (Semgrep)
-        run: semgrep --config=auto --error
+          npm audit --audit-level=high > audit-report.txt || true
+          npm audit --audit-level=high --json > audit-report.html || true
 
-      # ---------------------------
-      # SCA — Auditoria de Dependências
-      # ---------------------------
-      - name: Executar SCA (npm audit)
-        run: npm audit --audit-level=high || true
-
-      # ---------------------------
       # Secret Scan — GitLeaks
-      # ---------------------------
       - name: Executar Secret Scan (GitLeaks)
         uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: detect --report-path=gitleaks-report.txt
 
-      # ---------------------------
-      # Finalização
-      # ---------------------------
-      - name: Resumo da execução
+      - name: Converter relatório GitLeaks para HTML
         run: |
-          echo "----- RESUMO DO PIPELINE -----"
-          echo "SAST (Semgrep): Executado"
-          echo "SCA (npm audit): Executado"
-          echo "Secret Scan (GitLeaks): Executado"
-          echo "--------------------------------"
+          echo "<html><body><h2>Relatório GitLeaks</h2><pre>" > gitleaks-report.html
+          cat gitleaks-report.txt >> gitleaks-report.html
+          echo "</pre></body></html>" >> gitleaks-report.html
 
+      # Relatório consolidado
       - name: Gerar relatório consolidado
         run: |
           echo "Relatório de Segurança - Pipeline" > relatorio.txt
@@ -65,14 +53,34 @@ jobs:
           echo "SCA: Executado" >> relatorio.txt
           echo "Secrets: Executado" >> relatorio.txt
 
-      - name: Salvar relatório consolidado
+          echo "<html><body><h2>Relatório Consolidado</h2>" > relatorio.html
+          echo "<p>Este artefato contém versões TXT e HTML de todos os relatórios.</p>" >> relatorio.html
+          echo "</body></html>" >> relatorio.html
+
+      # Organização dos artefatos
+      - name: Organizar artefatos em pastas
+        run: |
+          mkdir -p "Relatórios de execução/txt"
+          mkdir -p "Relatórios de execução/html"
+
+          mv semgrep-report.txt "Relatórios de execução/txt/"
+          mv audit-report.txt "Relatórios de execução/txt/"
+          mv gitleaks-report.txt "Relatórios de execução/txt/"
+          mv relatorio.txt "Relatórios de execução/txt/"
+
+          mv semgrep-report.html "Relatórios de execução/html/"
+          mv audit-report.html "Relatórios de execução/html/"
+          mv gitleaks-report.html "Relatórios de execução/html/"
+          mv relatorio.html "Relatórios de execução/html/"
+
+      # Upload final
+      - name: Upload dos relatórios
         uses: actions/upload-artifact@v4
         with:
-          name: relatorio-seguranca
-          path: relatorio.txt
+          name: Relatórios de execução
+          path: "Relatórios de execução/"
 
-      # ---------------------------
+
       # Trabalho completo
-      # ---------------------------
       - name: Trabalho completo
         run: echo "✔ Pipeline finalizado com sucesso."
