@@ -30,8 +30,8 @@ jobs:
       # SAST / SCA
       - name: Executar SAST e SCA
         run: |
-          semgrep --config=auto --error > semgrep-report.txt
-          npm audit --audit-level=high > audit-report.txt || true
+          semgrep --config=auto --error > semgrep-report/SAST.txt
+          npm audit --audit-level=high > audit-report/SCA.txt || true
 
       # Secret Scan — GitLeaks
       - name: Executar Secret Scan (GitLeaks)
@@ -42,10 +42,10 @@ jobs:
       # Relatório consolidado
       - name: Gerar relatório consolidado
         run: |
-          echo "Relatório de Segurança - Pipeline" > relatorio.txt
-          echo "SAST: Executado" >> relatorio.txt
-          echo "SCA: Executado" >> relatorio.txt
-          echo "Secrets: Executado" >> relatorio.txt
+          echo "Relatório de Segurança - Pipeline" > relatorios.txt
+          echo "SAST: Executado" >> relatorios.txt
+          echo "SCA: Executado" >> relatorios.txt
+          echo "Secrets: Executado" >> relatorios.txt
 
       # Upload final
       - name: Upload dos relatórios
@@ -53,9 +53,7 @@ jobs:
         with:
           name: Relatórios de execução
           path: |
-            semgrep-report.txt
-            audit-report.txt
-            relatorio.txt
+            relatorios.txt
             gitleaks.sarif
 
       # Trabalho completo
