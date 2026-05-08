@@ -47,24 +47,16 @@ jobs:
           echo "SCA: Executado" >> relatorio.txt
           echo "Secrets: Executado" >> relatorio.txt
 
-      # Organização dos artefatos
-      - name: Organizar artefatos em pastas
-        run: |
-          mkdir -p "Relatórios de execução/txt"
-
-          mv semgrep-report.txt "Relatórios de execução/txt/"
-          mv audit-report.txt "Relatórios de execução/txt/"
-          mv relatorio.txt "Relatórios de execução/txt/"
-
-          # GitLeaks gera automaticamente gitleaks.sarif
-          cp gitleaks.sarif "Relatórios de execução/txt/"
-
       # Upload final
       - name: Upload dos relatórios
         uses: actions/upload-artifact@v4
         with:
           name: Relatórios de execução
-          path: "Relatórios de execução/"
+          path: |
+            semgrep-report.txt
+            audit-report.txt
+            relatorio.txt
+            gitleaks.sarif
 
       # Trabalho completo
       - name: Trabalho completo
