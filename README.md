@@ -1,11 +1,14 @@
-# TaskFlow — CP Mobile
+# NICE — Aplicativo de Saúde Mental e Bem‑Estar
 
-Aplicativo de gerenciamento de tarefas desenvolvido com **React Native** e **Expo**.
+O **NICE** é um aplicativo mobile desenvolvido com **React Native** e **Expo**, criado para apoiar o bem‑estar emocional, organização pessoal e hábitos saudáveis.  
+O projeto integra práticas modernas de **DevSecOps**, incluindo CI/CD, análise estática, verificação de dependências e detecção de segredos.
+
+---
 
 ## Grupo
 
 | Nome | RM |
-|:--|:--:|
+|------|------|
 | Thiago Araujo Vieira | 553477 |
 | Lucas Reis Diniz | 552838 |
 | Diana Letícia | 553562 |
@@ -18,7 +21,7 @@ Aplicativo de gerenciamento de tarefas desenvolvido com **React Native** e **Exp
 ## Tecnologias
 
 | Camada | Tecnologia |
-|:--|:--|
+|--------|------------|
 | Framework | React Native 0.81 + Expo 54 |
 | Linguagem | TypeScript |
 | Navegação | React Navigation (Stack + Bottom Tabs) |
@@ -26,11 +29,19 @@ Aplicativo de gerenciamento de tarefas desenvolvido com **React Native** e **Exp
 | HTTP | Axios |
 | Ícones | HugeIcons React Native |
 
----
 
-## Arquitetura
-
+##  Arquitetura
 ```
+NICE-SPRINTCYB/
+├── .github/
+│   └── workflows/
+│       └── applicationscan-pipeline.yml
+│
+assets/
+├── favicon.png
+├── icon.png
+└── splash-icon.png
+│
 src/
 ├── components/
 │   ├── CategoryIcon.tsx
@@ -41,16 +52,20 @@ src/
 │   ├── Header.tsx
 │   ├── StatusBadge.tsx
 │   └── TaskCard.tsx
+│
 ├── context/
 │   ├── AuthContext.tsx
 │   ├── TaskContext.tsx
 │   └── ThemeContext.tsx
+│
 ├── hooks/
 │   └── useTasks.ts
+│
 ├── routes/
 │   ├── AppRoutes.tsx
 │   ├── TabRoutes.tsx
 │   └── TaskStackRoutes.tsx
+│
 ├── screens/
 │   ├── home/HomeScreen.tsx
 │   ├── tasks/TaskListScreen.tsx
@@ -58,51 +73,68 @@ src/
 │   ├── tasks/TaskFormScreen.tsx
 │   ├── settings/SettingsScreen.tsx
 │   └── LoginScreen.tsx
+│
 ├── services/
 │   ├── api.ts
 │   └── taskStorage.ts
+│
 ├── types/
 │   ├── task.ts
 │   ├── user.ts
 │   └── navigation.ts
+│
 └── utils/
     ├── formatDate.ts
     └── generateId.ts
 ```
 
----
-
-## Funcionalidades
+##  Funcionalidades
 
 ### Autenticação
-- Tela de login com contexto de autenticação
-- Rotas protegidas por autenticação
+- Login com contexto global  
+- Persistência de sessão  
+- Rotas protegidas  
 
-### Tarefas
-- Listagem de tarefas com filtro por status e categoria
-- Criação e edição de tarefas
-- Detalhes da tarefa com status e prioridade
-- Status: **Pendente · Em Andamento · Concluída**
-- Prioridade: **Baixa · Média · Alta**
-- Categorias: Trabalho, Estudos, Saúde, Pessoal, Finanças, Lazer, Compras, Outros
+### Tarefas e Organização
+- Listagem de tarefas  
+- Filtros por status e categoria  
+- Criação, edição e exclusão  
+- Status: **Pendente**, **Em Andamento**, **Concluída**  
+- Prioridade: **Baixa**, **Média**, **Alta**
+- Categorias: Trabalho, Estudos, Saúde, Pessoal, Finanças, Lazer, Compras, Outros  
 
 ### Home
-- Frase motivacional aleatória via API (`dummyjson.com/quotes`)
-- Resumo das tarefas do dia
+- Frase motivacional via API  
+- Resumo das tarefas do dia  
 
 ### Configurações
-- Alternância de tema claro/escuro
+- Tema claro/escuro  
+- Preferências do usuário  
 
----
 
-## Pré-requisitos
+## Segurança e DevSecOps
 
+O pipeline CI/CD inclui:
+
+- SAST com Semgrep  
+- SCA com npm audit  
+- Secret Scan com GitLeaks  
+- Relatórios SARIF e HTML  
+- Gestão de segredos via GitHub Secrets  
+- Princípio do acesso mínimo  
+- Rotação periódica de credenciais  
+
+
+## Instalação
+
+### 1. Pré‑requisitos
 - [Node.js](https://nodejs.org/) 18+
 - [Expo CLI](https://docs.expo.dev/get-started/installation/)
 
 ```bash
 npm install -g expo-cli
 ```
+
 
 ## Demonstração 
 
