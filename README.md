@@ -1,7 +1,7 @@
 # NICE — Aplicativo de Saúde Mental e Bem‑Estar
 
-O **NICE** é um aplicativo mobile desenvolvido com **React Native** e **Expo**, criado para apoiar o bem‑estar emocional, organização pessoal e hábitos saudáveis.  
-O projeto integra práticas modernas de **DevSecOps**, incluindo CI/CD, análise estática, verificação de dependências e detecção de segredos.
+O **NICE** é um aplicativo mobile desenvolvido com **React Native** e **Expo**, criado para apoiar o bem‑estar emocional, 
+organização pessoal e hábitos saudáveis. O projeto integra práticas modernas de **DevSecOps**, incluindo CI/CD, análise estática, verificação de dependências e detecção de segredos.
 
 ---
 
@@ -9,10 +9,10 @@ O projeto integra práticas modernas de **DevSecOps**, incluindo CI/CD, análise
 
 | Nome | RM |
 |------|------|
-| Thiago Araujo Vieira | 553477 |
-| Lucas Reis Diniz | 552838 |
 | Diana Letícia | 553562 |
 | João Viktor | 552613 |
+| Lucas Reis Diniz | 552838 |
+| Thiago Araujo Vieira | 553477 |
 | Victor Augusto | 553518 |
 | Vitor de Moura | 553806 |
 
@@ -114,6 +114,9 @@ src/
 
 ## Segurança e DevSecOps
 
+O repositório conta com um pipeline configurado no **GitHub Actions**, responsável por executar automaticamente 
+verificações de segurança e qualidade sempre que há um push ou pull request.  
+
 O pipeline CI/CD inclui:
 
 - SAST com Semgrep  
@@ -122,7 +125,10 @@ O pipeline CI/CD inclui:
 - Relatórios SARIF e HTML  
 - Gestão de segredos via GitHub Secrets  
 - Princípio do acesso mínimo  
-- Rotação periódica de credenciais  
+- Rotação periódica de credenciais
+
+Ao final da execução, o Actions disponibiliza **relatórios completos** com o resultado de cada etapa, permitindo 
+acompanhar facilmente o status da segurança e da integridade do projeto.
 
 
 ## Instalação
