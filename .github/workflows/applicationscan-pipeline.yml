@@ -42,10 +42,10 @@ jobs:
       # Relatório consolidado
       - name: Gerar relatório consolidado
         run: |
-          echo "Relatório de Segurança - Pipeline" > relatorios.txt
-          echo "SAST: Executado" >> relatorios.txt
-          echo "SCA: Executado" >> relatorios.txt
-          echo "Secrets: Executado" >> relatorios.txt
+          echo "Relatório de Segurança - Pipeline" > relatorio.txt
+          echo "SAST: Executado" >> relatorio.txt
+          echo "SCA: Executado" >> relatorio.txt
+          echo "Secrets: Executado" >> relatorio.txt
 
       # Upload final
       - name: Upload dos relatórios
@@ -55,7 +55,7 @@ jobs:
           path: |
             semgrep-report.txt
             audit-report.txt
-            relatorios.txt
+            relatorio.txt
             gitleaks.sarif
 
       - name: Gerar zap-security-report.html
