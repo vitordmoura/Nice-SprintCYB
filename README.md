@@ -1,4 +1,4 @@
-# NICE — Aplicativo de Saúde Mental e Bem‑Estar
+# NICE - Aplicativo de Saúde Mental e Bem‑Estar
 
 O **NICE** é um aplicativo mobile desenvolvido com **React Native** e **Expo**, criado para apoiar o bem‑estar emocional, 
 organização pessoal e hábitos saudáveis. O projeto integra práticas modernas de **DevSecOps**, incluindo CI/CD, análise estática, verificação de dependências e detecção de segredos.
