@@ -1,0 +1,30 @@
+# .gitleaks.toml — Regras customizadas NICE (Sprint 4)
+# ============================================================
+# Extende a config padrão do Gitleaks para detectar credenciais
+# hardcodadas em código fonte que não seguem o padrão de
+# "API key" / "token" (ex.: password: '123' em AuthContext.tsx),
+# que passaram pelo scan da Sprint 3.
+
+title = "NICE Gitleaks Config — Sprint 4"
+
+[extend]
+useDefault = true
+
+# Regra 1: senhas literais curtas/fracas atribuídas em código
+# (cobre o padrão exato encontrado em AuthContext.tsx)
+[[rules]]
+id = "nice-hardcoded-weak-password"
+description = "Senha hardcodada (literal curto) em variável de código — ex: password: '123'"
+regex = '''(?i)(password|senha|pwd)\s*[:=]\s*['"][^'"]{1,12}['"]'''
+tags = ["credentials", "hardcoded", "nice-custom"]
+
+[[rules.allowlist]]
+description = "Ignorar exemplos em comentários/documentação marcados explicitamente"
+regexes = ['''//\s*example''']
+
+# Regra 2: arrays/objetos de usuários mockados com username+password juntos
+[[rules]]
+id = "nice-hardcoded-user-credentials"
+description = "Objeto/array de usuários com username e password literais no mesmo bloco"
+regex = '''username\s*[:=]\s*['"][^'"]+['"]\s*,\s*password\s*[:=]\s*['"][^'"]+['"]'''
+tags = ["credentials", "hardcoded", "auth", "nice-custom"]

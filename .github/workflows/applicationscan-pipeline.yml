@@ -1,8 +1,9 @@
-name: 🔐 Application Security Scan — SAST/SCA/Secrets
+name: 🔐 Application Security Scan — SAST/SCA/Secrets/Container
 
 on:
   push:
   pull_request:
+    branches: [main, develop]
 
 jobs:
   security:
@@ -24,39 +25,63 @@ jobs:
         with:
           node-version: 18
 
-      - name: Instalar dependências e Semgrep
+      - name: Instalar dependências, Semgrep e Trivy
         run: |
           npm install
           pip install semgrep
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
 
-      # SAST / SCA
-      - name: Executar SAST e SCA
+      # GATE 1 — SAST com Semgrep (BLOQUEANTE)
+      - name: SAST — Semgrep
         run: |
           semgrep --config=auto --error > semgrep-report.txt
-          npm audit --audit-level=high > audit-report.txt || true
+          # --error → exit code 1 se encontrar findings. Pipeline PARA aqui.
 
-      # Secret Scan — GitLeaks
-      - name: Executar Secret Scan (GitLeaks)
+      # GATE 2 — SCA com npm audit (BLOQUEANTE para HIGH/CRITICAL)
+      - name: SCA — npm audit
+        run: |
+          npm audit --audit-level=high > audit-report.txt
+          # SEM || true → HIGH ou CRITICAL interrompem o pipeline
+
+      # GATE 3 — Secret Scan — GitLeaks (BLOQUEANTE)
+      - name: Secret Scan — GitLeaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+        # Gitleaks já bloqueia por padrão — config customizada adiciona
+        # regra para credenciais hardcodadas tipo password:'123' (AuthContext.tsx)
+
+      # GATE 4 — Container scan com Trivy (BLOQUEANTE para HIGH/CRITICAL)
+      - name: Build e scan da imagem (Trivy)
+        run: |
+          docker build -t nice/mental:${{ github.sha }} .
+          trivy image --exit-code 1 \
+                      --severity HIGH,CRITICAL \
+                      --format sarif \
+                      --output trivy-results.sarif \
+                      nice/mental:${{ github.sha }}
+          # --exit-code 1 → HIGH/CRITICAL bloqueiam o pipeline
 
       # Relatório consolidado
       - name: Gerar relatório consolidado
         run: |
           echo "Relatório de Segurança - Pipeline" > relatorio.txt
-          echo "SAST: Executado" >> relatorio.txt
-          echo "SCA: Executado" >> relatorio.txt
-          echo "Secrets: Executado" >> relatorio.txt
+          echo "SAST: Executado (bloqueante)" >> relatorio.txt
+          echo "SCA: Executado (bloqueante)" >> relatorio.txt
+          echo "Secrets: Executado (bloqueante)" >> relatorio.txt
+          echo "Container (Trivy): Executado (bloqueante)" >> relatorio.txt
 
       # Upload final
       - name: Upload dos relatórios
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: Relatórios de execução
           path: |
             semgrep-report.txt
             audit-report.txt
+            trivy-results.sarif
             relatorio.txt
             gitleaks.sarif
 
