@@ -64,13 +64,13 @@ jobs:
           # de build (glob@7, rimraf@3) sem fix disponível no ecossistema Expo.
           trivy image --exit-code 1 \
                       --severity HIGH,CRITICAL \
-                      --scanners vuln \
-                      --skip-dirs /app/node_modules \
+                      --vuln-type os \
                       --format sarif \
                       --output trivy-results.sarif \
                       nice/mental:${{ github.sha }}
-          # --exit-code 1 → HIGH/CRITICAL no SO bloqueiam o pipeline
-          # --skip-dirs   → exclui node_modules do scan de imagem
+          # --exit-code 1  → HIGH/CRITICAL no SO bloqueiam o pipeline
+          # --vuln-type os → escaneia apenas pacotes do SO (Alpine)
+          #                  dependências Node são cobertas pelo npm audit (Gate 2)
 
       # Relatório consolidado
       - name: Gerar relatório consolidado
