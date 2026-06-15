@@ -1,6 +1,7 @@
-# Terraform — Infraestrutura Segura NICE — Plataforma de Saúde Mental e Bem-Estar
+# ============================================================
+# IaC Terraform — Infraestrutura Segura NICE — Plataforma de Saúde Mental e Bem-Estar
 # Sprint 4 — Controles de Segurança
-# -------------------------------------------------------------------------------
+# ============================================================
 
 terraform {
   required_version = ">= 1.5.0"
@@ -35,9 +36,9 @@ provider "aws" {
   }
 }
 
-# ------------------------------------------------------------
+# ============================================================
 # CONTROLE 2 — VPC Isolada com subnets privadas
-# ------------------------------------------------------------
+# ============================================================
 resource "aws_vpc" "nice_vpc" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -66,9 +67,9 @@ resource "aws_subnet" "public" {
   tags = { Name = "nice-public-${count.index}-${var.environment}" }
 }
 
-# ------------------------------------------------------------
+# ============================================================
 # CONTROLE 3 — Security Groups restritivos (least privilege)
-# ------------------------------------------------------------
+# ============================================================
 resource "aws_security_group" "app_sg" {
   name        = "nice-app-sg"
   description = "SG para o servico NICE — apenas trafego necessario"
@@ -127,9 +128,9 @@ resource "aws_security_group" "alb_sg" {
   tags = { Name = "nice-alb-sg" }
 }
 
-# ------------------------------------------------------------
+# ============================================================
 # CONTROLE 4 — Criptografia em trânsito e em repouso (KMS)
-# ------------------------------------------------------------
+# ============================================================
 resource "aws_kms_key" "nice_key" {
   description             = "KMS key para criptografia de dados NICE"
   deletion_window_in_days = 30
@@ -170,9 +171,9 @@ resource "aws_kms_alias" "nice_key_alias" {
   target_key_id = aws_kms_key.nice_key.key_id
 }
 
-# ------------------------------------------------------------
+# ============================================================
 # CONTROLE 5 — Secrets Manager para credenciais (sem hardcode)
-# ------------------------------------------------------------
+# ============================================================
 resource "aws_secretsmanager_secret" "app_secrets" {
   name                    = "nice/${var.environment}/app-secrets"
   description             = "Credenciais do NICE — rotação automática habilitada"
@@ -191,9 +192,9 @@ resource "aws_secretsmanager_secret_rotation" "app_secrets_rotation" {
   }
 }
 
-# ------------------------------------------------------------
+# ============================================================
 # CONTROLE 6 — IAM Role com least-privilege para a aplicação
-# ------------------------------------------------------------
+# ============================================================
 resource "aws_iam_role" "app_role" {
   name = "nice-app-role"
 
@@ -242,9 +243,9 @@ resource "aws_iam_role_policy" "app_policy" {
   })
 }
 
-# ------------------------------------------------------------
+# ============================================================
 # CONTROLE 7 — CloudTrail: auditoria de todas as chamadas API
-# ------------------------------------------------------------
+# ============================================================
 resource "aws_cloudtrail" "nice_trail" {
   name                          = "nice-audit-trail"
   s3_bucket_name                = aws_s3_bucket.trail_bucket.id
@@ -275,7 +276,9 @@ resource "aws_s3_bucket" "trail_bucket" {
 
 resource "aws_s3_bucket_versioning" "trail_bucket_versioning" {
   bucket = aws_s3_bucket.trail_bucket.id
-  versioning_configuration { status = "Enabled" }
+  versioning_configuration {
+    status = "Enabled"
+  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "trail_bucket_encryption" {
@@ -296,9 +299,9 @@ resource "aws_s3_bucket_public_access_block" "trail_bucket_block" {
   restrict_public_buckets = true
 }
 
-# ------------------------------------------------------------
+# ============================================================
 # CONTROLE 8 — AWS Config para conformidade contínua
-# ------------------------------------------------------------
+# ============================================================
 resource "aws_config_configuration_recorder" "nice" {
   name     = "nice-config-recorder"
   role_arn = aws_iam_role.config_role.arn
@@ -336,36 +339,50 @@ resource "aws_config_rule" "mfa_enabled" {
   depends_on = [aws_config_configuration_recorder.nice]
 }
 
-# ------------------------------------------------------------
+# ============================================================
 # CONTROLE 9 — GuardDuty para detecção de ameaças
-# ------------------------------------------------------------
+# ============================================================
 resource "aws_guardduty_detector" "nice" {
   enable = true
 
   datasources {
-    s3_logs { enable = true }
-    kubernetes { audit_logs { enable = true } }
+    s3_logs {
+      enable = true
+    }
+    kubernetes {
+      audit_logs {
+        enable = true
+      }
+    }
     malware_protection {
-      scan_ec2_instance_with_findings { ebs_volumes { enable = true } }
+      scan_ec2_instance_with_findings {
+        ebs_volumes {
+          enable = true
+        }
+      }
     }
   }
 
   tags = { Name = "nice-guardduty" }
 }
 
-# ------------------------------------------------------------
+# ============================================================
 # CONTROLE 10 — WAF para proteção da API
-#------------------------------------------------------------
+# ============================================================
 resource "aws_wafv2_web_acl" "nice_waf" {
   name  = "nice-waf"
   scope = "REGIONAL"
 
-  default_action { allow {} }
+  default_action {
+    allow {}
+  }
 
   rule {
     name     = "AWSManagedRulesCommonRuleSet"
     priority = 1
-    override_action { none {} }
+    override_action {
+      none {}
+    }
     statement {
       managed_rule_group_statement {
         name        = "AWSManagedRulesCommonRuleSet"
@@ -382,7 +399,9 @@ resource "aws_wafv2_web_acl" "nice_waf" {
   rule {
     name     = "RateLimitRule"
     priority = 2
-    action { block {} }
+    action {
+      block {}
+    }
     statement {
       rate_based_statement {
         limit              = 2000  # Max 2000 req/5min por IP
@@ -405,9 +424,9 @@ resource "aws_wafv2_web_acl" "nice_waf" {
   tags = { Name = "nice-waf" }
 }
 
-#------------------------------------------------------------
+# ============================================================
 # Variáveis
-#------------------------------------------------------------
+# ============================================================
 variable "aws_region" {
   description = "Região AWS"
   default     = "sa-east-1"
@@ -422,10 +441,12 @@ variable "environment" {
   }
 }
 
-#------------------------------------------------------------
+# ============================================================
 # Data Sources
-#------------------------------------------------------------
-data "aws_availability_zones" "available" { state = "available" }
+# ============================================================
+data "aws_availability_zones" "available" {
+  state = "available"
+}
 data "aws_caller_identity" "current" {}
 
 # Placeholder para o Lambda de rotação (referenciado acima)
@@ -447,10 +468,21 @@ resource "aws_iam_role" "config_role" {
   })
 }
 
-#------------------------------------------------------------
+# ============================================================
 # Outputs
-#------------------------------------------------------------
-output "vpc_id"           { value = aws_vpc.nice_vpc.id }
-output "kms_key_arn"      { value = aws_kms_key.nice_key.arn }
-output "secret_arn"       { value = aws_secretsmanager_secret.app_secrets.arn }
-output "guardduty_id"     { value = aws_guardduty_detector.nice.id }
+# ============================================================
+output "vpc_id" {
+  value = aws_vpc.nice_vpc.id
+}
+
+output "kms_key_arn" {
+  value = aws_kms_key.nice_key.arn
+}
+
+output "secret_arn" {
+  value = aws_secretsmanager_secret.app_secrets.arn
+}
+
+output "guardduty_id" {
+  value = aws_guardduty_detector.nice.id
+}
