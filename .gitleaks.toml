@@ -18,7 +18,7 @@ description = "Senha hardcodada (literal curto) em variável de código — ex: 
 regex = '''(?i)(password|senha|pwd)\s*[:=]\s*['"][^'"]{1,12}['"]'''
 tags = ["credentials", "hardcoded", "nice-custom"]
 
-[[rules.allowlist]]
+[rules.allowlist]
 description = "Ignorar exemplos em comentários/documentação marcados explicitamente"
 regexes = ['''//\s*example''']
 
