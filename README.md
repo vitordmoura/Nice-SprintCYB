@@ -7,7 +7,7 @@
 ## Grupo
 
 | Nome | RM |
-|------|----|
+|------|------|
 | Diana Letícia de Souza Inocencio | 553562 |
 | João Viktor Carvalho de Souza | 552613 |
 | Lucas Reis Diniz | 552838 |
