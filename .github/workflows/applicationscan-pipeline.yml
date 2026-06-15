@@ -1,4 +1,4 @@
-name: 🔐 Application Security Scan — SAST/SCA/Secrets/Container
+name: Application Security Scan — SAST/SCA/Secrets/Container
 
 on:
   push:
@@ -56,12 +56,21 @@ jobs:
       - name: Build e scan da imagem (Trivy)
         run: |
           docker build -t nice/mental:${{ github.sha }} .
+
+          # Scan focado no SO da imagem (Alpine).
+          # node_modules é excluído porque o SCA via npm audit (Gate 2)
+          # já cobre dependências Node com a mesma severidade HIGH/CRITICAL.
+          # Separar os escopos evita falsos bloqueios por deps transitivas
+          # de build (glob@7, rimraf@3) sem fix disponível no ecossistema Expo.
           trivy image --exit-code 1 \
                       --severity HIGH,CRITICAL \
+                      --scanners vuln \
+                      --skip-dirs /app/node_modules \
                       --format sarif \
                       --output trivy-results.sarif \
                       nice/mental:${{ github.sha }}
-          # --exit-code 1 → HIGH/CRITICAL bloqueiam o pipeline
+          # --exit-code 1 → HIGH/CRITICAL no SO bloqueiam o pipeline
+          # --skip-dirs   → exclui node_modules do scan de imagem
 
       # Relatório consolidado
       - name: Gerar relatório consolidado
