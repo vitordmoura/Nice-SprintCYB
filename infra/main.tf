@@ -342,7 +342,12 @@ resource "aws_config_configuration_recorder" "nice" {
   }
 }
 
-resource "aws_config_rule" "no_public_s3" {
+# CORREÇÃO: o tipo de recurso correto no provider hashicorp/aws é
+# "aws_config_config_rule" (não "aws_config_rule"). O nome antigo
+# não existe no schema do provider e causava o erro:
+#   "Error: Invalid resource type ... does not support resource type
+#    'aws_config_rule'."
+resource "aws_config_config_rule" "no_public_s3" {
   name = "nice-no-public-s3-buckets"
   source {
     owner             = "AWS"
@@ -351,7 +356,7 @@ resource "aws_config_rule" "no_public_s3" {
   depends_on = [aws_config_configuration_recorder.nice]
 }
 
-resource "aws_config_rule" "encrypted_volumes" {
+resource "aws_config_config_rule" "encrypted_volumes" {
   name = "nice-encrypted-ebs-volumes"
   source {
     owner             = "AWS"
@@ -360,7 +365,7 @@ resource "aws_config_rule" "encrypted_volumes" {
   depends_on = [aws_config_configuration_recorder.nice]
 }
 
-resource "aws_config_rule" "mfa_enabled" {
+resource "aws_config_config_rule" "mfa_enabled" {
   name = "nice-mfa-enabled-for-iam-console"
   source {
     owner             = "AWS"
