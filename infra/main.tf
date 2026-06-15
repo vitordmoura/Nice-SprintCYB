@@ -70,36 +70,27 @@ resource "aws_subnet" "public" {
 # ============================================================
 # CONTROLE 3 — Security Groups restritivos (least privilege)
 # ============================================================
+# ------------------------------------------------------------
+# NOTA DE SEGURANÇA / CORREÇÃO (Sprint 4):
+# Anteriormente as regras de ingress/egress estavam declaradas
+# inline dentro de aws_security_group.app_sg e aws_security_group.alb_sg,
+# e cada uma referenciava o security_group_id do outro
+# (app_sg -> alb_sg.id e alb_sg -> app_sg.id).
+# Isso gera uma dependência circular detectada pelo Terraform:
+#   "Error: Cycle: aws_security_group.app_sg, aws_security_group.alb_sg"
+# pois o Terraform não consegue determinar qual recurso criar primeiro.
+#
+# CORREÇÃO: os Security Groups passam a ser declarados "vazios"
+# (sem blocos ingress/egress inline) e cada regra é definida como
+# um recurso aws_security_group_rule independente. Isso quebra o
+# ciclo, pois os dois SGs podem ser criados em paralelo e as regras
+# (que referenciam ambos os IDs) são aplicadas somente depois,
+# preservando o mesmo modelo de least-privilege.
+# ------------------------------------------------------------
 resource "aws_security_group" "app_sg" {
   name        = "nice-app-sg"
   description = "SG para o servico NICE — apenas trafego necessario"
   vpc_id      = aws_vpc.nice_vpc.id
-
-  # Ingress: apenas porta da aplicação via ALB
-  ingress {
-    description     = "HTTP da aplicacao via ALB interno"
-    from_port       = 3000
-    to_port         = 3000
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb_sg.id]
-  }
-
-  # Egress: apenas o necessário (HTTPS para APIs externas + DNS)
-  egress {
-    description = "HTTPS para servicos externos"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    description = "DNS"
-    from_port   = 53
-    to_port     = 53
-    protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 
   tags = { Name = "nice-app-sg" }
 }
@@ -109,23 +100,62 @@ resource "aws_security_group" "alb_sg" {
   description = "SG do ALB — apenas HTTPS publico"
   vpc_id      = aws_vpc.nice_vpc.id
 
-  ingress {
-    description = "HTTPS publico"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Bloquear HTTP (forcar HTTPS)
-  egress {
-    from_port       = 3000
-    to_port         = 3000
-    protocol        = "tcp"
-    security_groups = [aws_security_group.app_sg.id]
-  }
-
   tags = { Name = "nice-alb-sg" }
+}
+
+# Ingress do app_sg: apenas trafego do ALB na porta 3000
+resource "aws_security_group_rule" "app_sg_ingress_from_alb" {
+  type                     = "ingress"
+  description              = "HTTP da aplicacao via ALB interno"
+  from_port                = 3000
+  to_port                  = 3000
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.app_sg.id
+  source_security_group_id = aws_security_group.alb_sg.id
+}
+
+# Egress do app_sg: HTTPS para servicos externos
+resource "aws_security_group_rule" "app_sg_egress_https" {
+  type              = "egress"
+  description       = "HTTPS para servicos externos"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  security_group_id = aws_security_group.app_sg.id
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+
+# Egress do app_sg: DNS
+resource "aws_security_group_rule" "app_sg_egress_dns" {
+  type              = "egress"
+  description       = "DNS"
+  from_port         = 53
+  to_port           = 53
+  protocol          = "udp"
+  security_group_id = aws_security_group.app_sg.id
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+
+# Ingress do alb_sg: HTTPS publico
+resource "aws_security_group_rule" "alb_sg_ingress_https" {
+  type              = "ingress"
+  description       = "HTTPS publico"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  security_group_id = aws_security_group.alb_sg.id
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+
+# Egress do alb_sg: encaminha apenas para app_sg na porta 3000 (forca HTTPS de entrada / bloqueia HTTP)
+resource "aws_security_group_rule" "alb_sg_egress_to_app" {
+  type                     = "egress"
+  description              = "Encaminhamento para a aplicacao (forca HTTPS na borda)"
+  from_port                = 3000
+  to_port                  = 3000
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.alb_sg.id
+  source_security_group_id = aws_security_group.app_sg.id
 }
 
 # ============================================================
@@ -457,6 +487,19 @@ resource "aws_lambda_function" "secret_rotator" {
   handler       = "index.handler"
   runtime       = "nodejs20.x"
   tags          = { Name = "nice-secret-rotator" }
+
+  # CORREÇÃO (Semgrep: aws-lambda-x-ray-tracing-not-active):
+  # Habilita o X-Ray em modo ativo para rastreamento ponta-a-ponta
+  # das execuções da função de rotação de segredos.
+  tracing_config {
+    mode = "Active"
+  }
+}
+
+# Permite que a role da função envie traces para o X-Ray
+resource "aws_iam_role_policy_attachment" "secret_rotator_xray" {
+  role       = aws_iam_role.app_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
 }
 
 resource "aws_iam_role" "config_role" {
